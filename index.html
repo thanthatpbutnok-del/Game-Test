@@ -182,42 +182,43 @@ border-radius: 10px;
 display: none;
 z-index: 50;
 }
+
 /* ส่วนควบคุมบนมือถือ */
 .mobile-controls {
-    display: none; /* ซ่อนไว้ก่อนบนจอใหญ่ */
-    margin-top: 20px;
-    text-align: center;
-    width: 100%;
+display: none; /* ซ่อนไว้ก่อนบนจอใหญ่ */
+margin-top: 20px;
+text-align: center;
+width: 100%;
 }
 
 .btn-jump {
-    background-color: #e74c3c;
-    color: white;
-    border: none;
-    border-radius: 50px;
-    padding: 15px 50px;
-    font-size: 24px;
-    font-weight: bold;
-    box-shadow: 0 8px 0 #c0392b, 0 15px 20px rgba(0,0,0,0.4);
-    cursor: pointer;
-    user-select: none; /* ป้องกันการคลุมดำข้อความเมื่อกดย้ำๆ */
-    -webkit-tap-highlight-color: transparent; /* ป้องกันแถบสีฟ้ากระพริบเวลากดบนมือถือ */
+background-color: #e74c3c;
+color: white;
+border: none;
+border-radius: 50px;
+padding: 15px 50px;
+font-size: 24px;
+font-weight: bold;
+box-shadow: 0 8px 0 #c0392b, 0 15px 20px rgba(0,0,0,0.4);
+cursor: pointer;
+user-select: none;
+-webkit-tap-highlight-color: transparent;
 }
 
 .btn-jump:active {
-    transform: translateY(8px);
-    box-shadow: 0 0px 0 #c0392b, 0 5px 10px rgba(0,0,0,0.4);
+transform: translateY(8px);
+box-shadow: 0 0px 0 #c0392b, 0 5px 10px rgba(0,0,0,0.4);
 }
 
 /* แสดงปุ่มเมื่อหน้าจอเล็กกว่า 850px และปรับ Canvas ให้ย่อตามสัดส่วน */
 @media (max-width: 850px) {
-    .mobile-controls {
-        display: block;
-    }
-    canvas {
-        width: 100%;
-        height: auto;
-    }
+.mobile-controls {
+display: block;
+}
+canvas {
+width: 100%;
+height: auto;
+}
 }
 </style>
 </head>
@@ -234,9 +235,10 @@ z-index: 50;
 
 <div class="overlay" id="gameOverlay"></div>
 <canvas id="gameCanvas" width="800" height="400"></canvas>
-<!-- 🌟 เพิ่มปุ่มกระโดดตรงนี้ 🌟 -->
+
+<!-- ปุ่มกระโดดสำหรับมือถือ/แท็บเล็ต -->
 <div class="mobile-controls">
-    <button id="jumpBtn" class="btn-jump">⬆️ กระโดด (JUMP)</button>
+<button id="jumpBtn" class="btn-jump">⬆️ กระโดด (JUMP)</button>
 </div>
 
 <div id="quizModal">
@@ -265,7 +267,7 @@ z-index: 50;
 </div>
 
 <div class="instructions">
-<strong>วิธีเล่น:</strong> กดปุ่ม <strong>[ Spacebar ]</strong> เพื่อกระโดดหลบศัตรู หรือกระโดดชน <strong>กล่องคำถาม ❓</strong> เพื่อเริ่มทำข้อสอบ<br>
+<strong>วิธีเล่น:</strong> กดปุ่ม <strong>[ Spacebar ]</strong> หรือ <strong>[ ปุ่มกระโดด ]</strong> เพื่อกระโดดหลบศัตรู และชน <strong>กล่องคำถาม ❓</strong> เพื่อเริ่มทำข้อสอบ<br>
 🌟 <strong>พิเศษ:</strong> กระโดดเก็บ <strong>ดาว ⭐</strong> เพื่อฟื้นฟูพลังชีวิตและรับคะแนนพิเศษ!
 </div>
 
@@ -315,7 +317,7 @@ let player, enemies, quizBlocks, stars, score, lives, currentQuestionIndex, game
 
 function init() {
 player = { x: 100, y: groundY - 50, w: 40, h: 50, vy: 0, gravity: 0.6, jumpForce: -14.5, isJumping: false };
-enemies = []; quizBlocks = []; stars = []; // เพิ่ม Array สำหรับเก็บดาว
+enemies = []; quizBlocks = []; stars = []; 
 score = 0; lives = 7; currentQuestionIndex = 0;
 gameOver = false; isQuizActive = false; spawnTimer = 0; invincibleFrame = 0;
 scoreBreakdown = { physics: 0, math: 0, thai: 0, english: 0 };
@@ -334,51 +336,43 @@ for(let i=0; i<7; i++) { hearts += (i < lives) ? "❤️ " : "🖤 "; }
 document.getElementById("livesDisplay").innerText = "ชีวิต: " + hearts;
 }
 
-// ฟังก์ชันแยกสำหรับคำสั่งกระโดด เพื่อให้เรียกใช้ได้ทั้งจากคีย์บอร์ดและปุ่มบนจอ
+// 🌟 ระบบควบคุมใหม่ รองรับทั้งคีย์บอร์ดและหน้าจอสัมผัส
 function doJump() {
-    if (!player.isJumping && !gameOver && !isQuizActive) {
-        player.vy = player.jumpForce;
-        player.isJumping = true;
-    }
+if (!player.isJumping && !gameOver && !isQuizActive) {
+player.vy = player.jumpForce;
+player.isJumping = true;
+}
 }
 
-// ควบคุมด้วย Spacebar (สำหรับคอมพิวเตอร์)
 window.addEventListener("keydown", function(e) {
-    if (e.code === "Space") {
-        e.preventDefault(); // ป้องกันไม่ให้หน้าจอเลื่อนลงเวลาสเปซบาร์
-        doJump();
-    }
+if (e.code === "Space") {
+e.preventDefault(); 
+doJump();
+}
 });
 
-// ควบคุมด้วยปุ่มบนหน้าจอ (สำหรับมือถือและแท็บเล็ต)
 const jumpBtn = document.getElementById("jumpBtn");
 
-// ใช้ touchstart แทน click เพื่อให้ตัวละครกระโดดทันทีที่นิ้วแตะจอ (ไม่มีดีเลย์)
 jumpBtn.addEventListener("touchstart", function(e) {
-    e.preventDefault(); 
-    doJump();
+e.preventDefault(); 
+doJump();
 });
 
-// เผื่อกรณีใช้เมาส์คลิกปุ่มบนหน้าจอคอม
 jumpBtn.addEventListener("mousedown", function(e) {
-    e.preventDefault();
-    doJump();
-});
+e.preventDefault();
+doJump();
 });
 
 function handleSpawning() {
 spawnTimer++;
 if (spawnTimer > 90) {
 let rand = Math.random();
-// สุ่มเกิดกล่องคำถาม (ถ้ายังไม่มีในจอ)
 if (currentQuestionIndex < quizBank.length && quizBlocks.length === 0 && rand > 0.3) {
 quizBlocks.push({ x: canvas.width, y: groundY - 90, w: 40, h: 40, speed: 3.8 });
 } 
-// สุ่มเกิดดาวฟื้นฟูเลือด (โอกาส 15%)
 else if (rand < 0.15) {
-stars.push({ x: canvas.width, y: groundY - 100 - Math.random() * 50, w: 30, h: 30, speed: 5.5 });
+stars.push({ x: canvas.width, y: groundY - 100 - Math.random() * 50, w: 30, h: 30, speed: 4.5 });
 } 
-// นอกนั้นให้สุ่มศัตรู
 else {
 let enemyTypes = ["🐢", "🍄"];
 let type = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
@@ -492,16 +486,16 @@ player.isJumping = false;
 
 handleSpawning();
 
+// จัดการดาว
 for (let i = stars.length - 1; i >= 0; i--) {
 let star = stars[i];
 star.x -= star.speed;
 if (star.x + star.w < 0) { stars.splice(i, 1); continue; }
-// ตรวจสอบการชนกับผู้เล่น
 if (player.x < star.x + star.w && player.x + player.w > star.x &&
     player.y < star.y + star.h && player.y + player.h > star.y) {
-    stars.splice(i, 1);
-    if (lives < 5) lives++;
-    score += 50; //
+    stars.splice(i, 1); 
+    if (lives < 5) lives++; 
+    score += 50; 
     updateUI();
 }
 }
