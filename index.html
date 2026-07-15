@@ -494,7 +494,7 @@ if (star.x + star.w < 0) { stars.splice(i, 1); continue; }
 if (player.x < star.x + star.w && player.x + player.w > star.x &&
     player.y < star.y + star.h && player.y + player.h > star.y) {
     stars.splice(i, 1); 
-    if (lives < 5) lives++; 
+    if (lives < 7) lives++; 
     score += 50; 
     updateUI();
 }
